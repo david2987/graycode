@@ -2,6 +2,7 @@ import Layout from '../Components/Layout';
 import Modal from '../Components/Modal';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import Toast from '../Components/Toast';
 
 function VentasPage() {
   const [ventas, setVentas] = useState([]);
@@ -9,8 +10,12 @@ function VentasPage() {
   const [form, setForm] = useState({ comprobante_externo: "", productos: [] });
   const [productos, setProductos] = useState([]);
   const [detalleTemp, setDetalleTemp] = useState({ producto_id: "", cantidad: 1 });
+  const [toast, setToast] = useState({ message: "", onClose: () => {} });
 
-  const cargarVentas = () => axios.get('/ventas/getAll').then(res => setVentas(res.data));
+  const cargarVentas = () => axios.get('/ventas/getAll').then(res => {
+    console.log(res.data);
+    setVentas(res.data);
+  });
   const cargarProductos = () => axios.get('/productos/getAll').then(res => setProductos(res.data));
 
   useEffect(() => {
@@ -37,14 +42,19 @@ function VentasPage() {
   };
 
   const guardarVenta = async (e) => {
-    e.preventDefault();
-    await axios.post('/api/ventas', form);
+    e.preventDefault();    
+    await axios.post('/ventas', form).then(() => {
+      setToast({ message: "Venta guardada exitosamente", error: false, onClose: () => setToast({ message: "", error: false, onClose: () => {} }) });
+    }).catch(( {response: {data: {message}} } ) => {
+      setToast({ message: message || "Error al guardar la venta", error: true, onClose: () => setToast({ message: "", error: false, onClose: () => {} }) });
+    })   ;
     setModalVisible(false);
     cargarVentas();
   };
 
-  return (
+  return (  
     <div>
+        <Toast message={toast.message} error={toast.error} onClose={toast.onClose} />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Ventas</h2>
         <button onClick={() => setModalVisible(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
@@ -52,7 +62,7 @@ function VentasPage() {
         </button>
       </div>
 
-      <table className="w-full border mb-6">
+      <table className="w-full border mb-6 text-center">
         <thead className="bg-gray-100">
           <tr>
             <th>Comprobante</th>
@@ -65,7 +75,7 @@ function VentasPage() {
             <tr key={v.id} className="border-t">
               <td>{v.comprobante_externo}</td>
               <td>{new Date(v.fecha).toLocaleString()}</td>
-              <td>${v.total.toFixed(2)}</td>
+              <td>${v.total}</td>
             </tr>
           ))}
         </tbody>
@@ -89,9 +99,9 @@ function VentasPage() {
               className="border p-2 rounded w-full"
             >
               <option value="">Seleccione producto</option>
-              {productos.map(p => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
+              {productos.map(p => {
+                return p.stock > 0 ?  <option key={p.id} value={p.id}>{p.nombre} - Stock: {p.stock} </option> : null
+              })}
             </select>
             <input
               type="number"

@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class MovimientoCajaController extends Controller
 {
-    public function index(Request $request)
+    public function getAll(Request $request)
     {
         $query = MovimientoCaja::query();
 

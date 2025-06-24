@@ -8,7 +8,7 @@ export default function VentaForm({ onVentaRealizada }) {
   const [detalleVenta, setDetalleVenta] = useState([]);
 
   useEffect(() => {
-    axios.get("/api/productos").then((res) => setProductos(res.data));
+    axios.get("/productos/getAll").then((res) => setProductos(res.data));
   }, []);
 
   const agregarProducto = () => {
@@ -46,7 +46,7 @@ export default function VentaForm({ onVentaRealizada }) {
     };
 
     try {
-      await axios.post("/api/ventas", ventaPayload);
+      await axios.post("/ventas", ventaPayload);
       alert("¡Venta registrada correctamente!");
       setDetalleVenta([]);
       onVentaRealizada();

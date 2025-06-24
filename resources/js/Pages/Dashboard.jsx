@@ -52,7 +52,7 @@ export default function Dashboard() {
                         <button 
                             onClick={()=> setActiveTab('caja')}
                             className={`px-4 py-2 rounded-md ${
-                                activeTab === 'ventas'
+                                activeTab === 'caja'
                                     ? 'bg-blue-500 text-white'
                                     : 'bg-gray-200 text-gray-700'
                             }`}>

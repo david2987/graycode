@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Venta extends Model
 {
-    protected $table = 'venta';
+    protected $table = 'ventas';
 
-    protected $fillable = ['producto','cantida','subtotal'];
+    protected $fillable = ['comprobante_externo','fecha','total'];
+    public function detalles()
+    {
+        return $this->hasMany(DetalleVenta::class);
+    }
 }

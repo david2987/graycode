@@ -12,7 +12,7 @@ function CajaPage() {
   const cargar = async () => {
     const [movRes, balRes] = await Promise.all([
       axios.get("/caja/getAll"),
-      axios.get("/caja/balance"),
+      // axios.get("/caja/balance"),
     ]);
     setMovimientos(movRes.data);
     setBalance(balRes.data);
@@ -24,7 +24,7 @@ function CajaPage() {
 
   const guardar = async (e) => {
     e.preventDefault();
-    await axios.post("/api/caja", form);
+    await axios.post("/caja", form);
     setForm({ tipo: "ingreso", monto: "", descripcion: "" });
     setModalVisible(false);
     cargar();
@@ -58,7 +58,7 @@ function CajaPage() {
         </thead>
         <tbody>
           {movimientos.map((m) => (
-            <tr key={m.id} className="border-t">
+            <tr key={m.id} className="border-t text-center">
               <td>{new Date(m.fecha).toLocaleString()}</td>
               <td className={m.tipo === "ingreso" ? "text-green-600" : "text-red-600"}>
                 {m.tipo}
