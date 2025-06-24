@@ -16,7 +16,7 @@ export default function ProductoList({ onEdit }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm("¿Eliminar producto?")) return;
-    await axios.delete(`/api/productos/${id}`);
+    await axios.delete(`/productos/${id}`);
     fetchProductos();
   };
 

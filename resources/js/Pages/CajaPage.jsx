@@ -1,173 +1,109 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import Layout from '../Components/Layout';
+import Modal from '../Components/Modal';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-export default function CajaPage() {
-    const [movimientos, setMovimientos] = useState([]);
-    const [balance, setBalance] = useState(null);
-    const [tipo, setTipo] = useState("ingreso");
-    const [monto, setMonto] = useState("");
-    const [descripcion, setDescripcion] = useState("");
+function CajaPage() {
+  const [movimientos, setMovimientos] = useState([]);
+  const [balance, setBalance] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [form, setForm] = useState({ tipo: "ingreso", monto: "", descripcion: "" });
 
-    const fetchDatos = async () => {
-        const [movRes, balRes] = await Promise.all([
-            axios.get("/api/caja"),
-            axios.get("/api/caja/balance"),
-        ]);
-        setMovimientos(movRes.data);
-        setBalance(balRes.data);
-    };
+  const cargar = async () => {
+    const [movRes, balRes] = await Promise.all([
+      axios.get("/caja/getAll"),
+      axios.get("/caja/balance"),
+    ]);
+    setMovimientos(movRes.data);
+    setBalance(balRes.data);
+  };
 
-    const enviarMovimiento = async (e) => {
-        e.preventDefault();
-        try {
-            await axios.post("/api/caja", {
-                tipo,
-                monto,
-                descripcion,
-            });
-            setMonto("");
-            setDescripcion("");
-            fetchDatos();
-        } catch (err) {
-            alert("Error al guardar: " + err.response?.data?.message);
-        }
-    };
-    const [filtros, setFiltros] = useState({ desde: "", hasta: "", tipo: "" });
+  useEffect(() => {
+    cargar();
+  }, []);
 
-    const filtrarMovimientos = async () => {
-        const res = await axios.get("/api/caja", { params: filtros });
-        setMovimientos(res.data);
-    };
+  const guardar = async (e) => {
+    e.preventDefault();
+    await axios.post("/api/caja", form);
+    setForm({ tipo: "ingreso", monto: "", descripcion: "" });
+    setModalVisible(false);
+    cargar();
+  };
 
-    const resetearFiltros = () => {
-        setFiltros({ desde: "", hasta: "", tipo: "" });
-        fetchDatos();
-    };
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold">Caja</h2>
+        <button onClick={() => setModalVisible(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
+          Registrar Movimiento
+        </button>
+      </div>
 
-    useEffect(() => {
-        fetchDatos();
-    }, []);
-
-    return (
-        <div className="max-w-4xl mx-auto mt-10">
-            <h1 className="text-2xl font-bold mb-4">Flujo de Caja</h1>
-
-            <form onSubmit={enviarMovimiento} className="flex gap-4 mb-6">
-                <select
-                    value={tipo}
-                    onChange={(e) => setTipo(e.target.value)}
-                    className="border p-2 rounded"
-                >
-                    <option value="ingreso">Ingreso</option>
-                    <option value="egreso">Egreso</option>
-                </select>
-                <input
-                    type="number"
-                    min="0"
-                    value={monto}
-                    onChange={(e) => setMonto(e.target.value)}
-                    placeholder="Monto"
-                    className="border p-2 rounded"
-                    required
-                />
-                <input
-                    type="text"
-                    value={descripcion}
-                    onChange={(e) => setDescripcion(e.target.value)}
-                    placeholder="Descripción"
-                    className="border p-2 rounded w-full"
-                />
-                <button className="bg-green-600 text-white px-4 py-2 rounded">
-                    Registrar
-                </button>
-            </form>
-
-            <h2 className="text-xl font-semibold mb-2">Balance Actual</h2>
-            {balance && (
-                <div className="bg-gray-100 p-4 rounded mb-6">
-                    <p>
-                        <strong>Ingresos:</strong> $
-                        {balance.ingresos.toFixed(2)}
-                    </p>
-                    <p>
-                        <strong>Egresos:</strong> ${balance.egresos.toFixed(2)}
-                    </p>
-                    <p>
-                        <strong>Saldo:</strong> ${balance.saldo.toFixed(2)}
-                    </p>
-                </div>
-            )}
-
-            <h2 className="text-xl font-semibold mb-2">Filtrar Movimientos</h2>
-            <div className="flex gap-4 mb-4">
-                <input
-                    type="date"
-                    onChange={(e) =>
-                        setFiltros({ ...filtros, desde: e.target.value })
-                    }
-                    className="border p-2 rounded"
-                    value={filtros.desde}
-                />
-                <input
-                    type="date"
-                    onChange={(e) =>
-                        setFiltros({ ...filtros, hasta: e.target.value })
-                    }
-                    className="border p-2 rounded"
-                    value={filtros.hasta}
-                />
-                <select
-                    value={filtros.tipo}
-                    onChange={(e) =>
-                        setFiltros({ ...filtros, tipo: e.target.value })
-                    }
-                    className="border p-2 rounded"
-                >
-                    <option value="">Todos</option>
-                    <option value="ingreso">Ingresos</option>
-                    <option value="egreso">Egresos</option>
-                </select>
-                <button
-                    onClick={filtrarMovimientos}
-                    className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                    Filtrar
-                </button>
-                <button
-                    onClick={resetearFiltros}
-                    className="bg-gray-300 text-black px-4 py-2 rounded"
-                >
-                    Limpiar
-                </button>
-            </div>
-            <table className="w-full border">
-                <thead className="bg-gray-200">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th>Monto</th>
-                        <th>Descripción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {movimientos.map((m) => (
-                        <tr key={m.id} className="border-t">
-                            <td>{new Date(m.fecha).toLocaleString()}</td>
-                            <td
-                                className={
-                                    m.tipo === "ingreso"
-                                        ? "text-green-600"
-                                        : "text-red-600"
-                                }
-                            >
-                                {m.tipo}
-                            </td>
-                            <td>${parseFloat(m.monto).toFixed(2)}</td>
-                            <td>{m.descripcion}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+      {balance && (
+        <div className="bg-gray-100 p-4 rounded mb-4">
+          <p><strong>Ingresos:</strong> ${balance.ingresos.toFixed(2)}</p>
+          <p><strong>Egresos:</strong> ${balance.egresos.toFixed(2)}</p>
+          <p><strong>Saldo:</strong> ${balance.saldo.toFixed(2)}</p>
         </div>
-    );
+      )}
+
+      <table className="w-full border">
+        <thead className="bg-gray-200">
+          <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Monto</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {movimientos.map((m) => (
+            <tr key={m.id} className="border-t">
+              <td>{new Date(m.fecha).toLocaleString()}</td>
+              <td className={m.tipo === "ingreso" ? "text-green-600" : "text-red-600"}>
+                {m.tipo}
+              </td>
+              <td>${parseFloat(m.monto).toFixed(2)}</td>
+              <td>{m.descripcion}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <Modal visible={modalVisible} onClose={() => setModalVisible(false)}>
+        <h3 className="text-xl font-semibold mb-4">Registrar Movimiento</h3>
+        <form onSubmit={guardar} className="space-y-4">
+          <select
+            value={form.tipo}
+            onChange={(e) => setForm({ ...form, tipo: e.target.value })}
+            className="border p-2 w-full rounded"
+          >
+            <option value="ingreso">Ingreso</option>
+            <option value="egreso">Egreso</option>
+          </select>
+          <input
+            type="number"
+            placeholder="Monto"
+            value={form.monto}
+            onChange={(e) => setForm({ ...form, monto: e.target.value })}
+            className="border p-2 w-full rounded"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Descripción"
+            value={form.descripcion}
+            onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+            className="border p-2 w-full rounded"
+          />
+          <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">
+            Guardar
+          </button>
+        </form>
+      </Modal>
+    </div>
+  );
 }
+
+CajaPage.layout = (page) => <Layout>{page}</Layout>;
+export default CajaPage;

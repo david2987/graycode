@@ -12,7 +12,7 @@ export default function ProductoImportador({ onImport }) {
     formData.append("archivo", archivo);
 
     try {
-      await axios.post("/api/productos/importar", formData);
+      await axios.post("/productos/importar", formData);
       alert("Productos importados correctamente");
       onImport(); // refresca la lista
     } catch (err) {
