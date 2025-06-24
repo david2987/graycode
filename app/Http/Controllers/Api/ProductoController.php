@@ -10,9 +10,16 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductoController extends Controller
 {
-    public function getAll()
+    public function getAll(Request $request)
     {
-        return response()->json(Producto::all());
+        $search = $request->input('search');
+    $query = Producto::query();
+
+    if ($search) {
+        $query->where('nombre', 'like', "%{$search}%");
+    }
+
+    return response()->json($query->orderBy('id', 'desc')->paginate(10));
     }
 
     public function store(Request $request)

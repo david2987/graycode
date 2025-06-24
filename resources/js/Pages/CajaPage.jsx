@@ -34,12 +34,15 @@ function CajaPage() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Caja</h2>
-        <button onClick={() => setModalVisible(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Registrar Movimiento
-        </button>
-        <button onClick={() => window.open("/reporte-caja/pdf", "_blank")} className="bg-yellow-600 text-white px-4 py-2 rounded">
-          Reporte
-        </button>
+        <div className="flex items-center">
+          <button onClick={() => setModalVisible(true)} className="bg-green-600 text-white px-4 py-2 rounded">
+          <i className="fas fa-plus mr-2"></i> 
+            Registrar Movimiento
+          </button>
+          <button onClick={() => window.open("/reporte-caja/pdf", "_blank")} className="ms-2 bg-yellow-600 text-white px-4 py-2 rounded">
+            <i className="fas fa-file-pdf"></i> Reporte
+          </button>
+        </div>
       </div>
 
       {balance && (

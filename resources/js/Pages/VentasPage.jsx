@@ -57,7 +57,8 @@ function VentasPage() {
         <Toast message={toast.message} error={toast.error} onClose={toast.onClose} />
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Ventas</h2>
-        <button onClick={() => setModalVisible(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
+        <button onClick={() => setModalVisible(true)} className="bg-green-600 text-white px-4 py-2 rounded">
+          <i className="fas fa-plus mr-2"></i> 
           Registrar Venta
         </button>
       </div>
@@ -99,7 +100,7 @@ function VentasPage() {
               className="border p-2 rounded w-full"
             >
               <option value="">Seleccione producto</option>
-              {productos.map(p => {
+              {productos && productos.map(p => {
                 return p.stock > 0 ?  <option key={p.id} value={p.id}>{p.nombre} - Stock: {p.stock} </option> : null
               })}
             </select>
@@ -111,7 +112,7 @@ function VentasPage() {
               className="border p-2 rounded w-24"
             />
             <button type="button" onClick={agregarProductoADetalle} className="bg-green-600 text-white px-4 rounded">
-              +
+              <i className="fas fa-plus mr-2"></i> 
             </button>
           </div>
           <ul className="list-disc ml-6">

@@ -19,6 +19,26 @@ class VentaController extends Controller
     {
         return response()->json(Venta::with('detalles')->orderByDesc('fecha')->get());
     }
+    public function filtrar(Request $request)
+    {
+        $query = Venta::with('detalles.producto');
+
+        if ($request->input('desde')) {
+            $query->whereDate('fecha', '>=', $request->input('desde'));
+        }
+
+        if ($request->input('hasta')) {
+            $query->whereDate('fecha', '<=', $request->input('hasta'));
+        }
+
+        if ($request->filled('producto')) {
+            $query->whereHas('detalles.producto', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->producto . '%');
+            });
+        }
+
+        return response()->json($query->orderByDesc('fecha')->get());
+    }
 
 
     public function store(Request $request)
@@ -82,24 +102,5 @@ class VentaController extends Controller
             return response()->json(['error' => $e->getMessage()], 422);            
         }
     }
-    public function filtrar(Request $request)
-    {
-        $query = Venta::with('detalles.producto');
 
-        if ($request->filled('desde')) {
-            $query->whereDate('fecha', '>=', $request->desde);
-        }
-
-        if ($request->filled('hasta')) {
-            $query->whereDate('fecha', '<=', $request->hasta);
-        }
-
-        if ($request->filled('producto')) {
-            $query->whereHas('detalles.producto', function ($q) use ($request) {
-                $q->where('nombre', 'like', '%' . $request->producto . '%');
-            });
-        }
-
-        return response()->json($query->orderByDesc('fecha')->get());
-    }
 }

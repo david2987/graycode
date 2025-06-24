@@ -2,6 +2,7 @@ import Layout from '../Components/Layout';
 import Modal from '../Components/Modal';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Paginator from '../Components/Paginator';
 
 function ProductosPage() {
   const [productos, setProductos] = useState([]);
@@ -9,14 +10,19 @@ function ProductosPage() {
   const [modo, setModo] = useState("crear"); // o "editar"
   const [form, setForm] = useState({ nombre: "", precio_venta: "", stock: "" });
   const [productoEditando, setProductoEditando] = useState(null);
+  const [meta, setMeta] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const cargarProductos = () => {
-    axios.get('/productos/getAll').then(res => setProductos(res.data));
+    axios.get('/productos/getAll?page=' + currentPage).then(res => {
+      setProductos(res.data.data);
+      setMeta(res.data.meta);
+    });
   };
 
   useEffect(() => {
     cargarProductos();
-  }, []);
+  }, [currentPage, meta]);
 
   const abrirModalCrear = () => {
     setModo("crear");
@@ -57,8 +63,9 @@ function ProductosPage() {
         <h2 className="text-2xl font-bold">Productos</h2>
         <button
           onClick={abrirModalCrear}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded"
         >
+          <i className="fas fa-plus mr-2"></i> 
           Agregar Producto
         </button>
       </div>
@@ -80,15 +87,17 @@ function ProductosPage() {
               <td>{p.stock}</td>
               <td>
                 <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                  className="bg-blue-600 text-white px-2 py-2 rounded"
                   onClick={() => abrirModalEditar(p)}
                 >
+                  <i className="fas fa-edit mr-2"></i>
                   Editar
                 </button>
                 <button
-                  className="bg-red-600 text-white px-4 ml-2 py-2 rounded"
+                  className="bg-red-600 text-white px-2 ml-2 py-2 rounded"
                   onClick={() => handleDelete(p.id)}
                 >
+                  <i className="fas fa-trash mr-2"></i>
                   Eliminar
                 </button>
               </td>
@@ -96,6 +105,8 @@ function ProductosPage() {
           ))}
         </tbody>
       </table>
+      
+      <Paginator meta={meta} onPageChange={setCurrentPage} />
 
       {/* Modal */}
       <Modal visible={modalVisible} onClose={() => setModalVisible(false)}>

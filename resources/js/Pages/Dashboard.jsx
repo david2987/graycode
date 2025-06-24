@@ -24,45 +24,46 @@ export default function Dashboard() {
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Dashboard
-                    </h2>
-                    <div className="space-x-4">
+                <div className="flex items-center justify-between" >                   
+                    <div className="space-x-4 inline-flex">
                         <button
                             onClick={() => setActiveTab('productos')}
                             className={`px-4 py-2 rounded-md ${
                                 activeTab === 'productos'
-                                    ? 'bg-blue-500 text-white'
+                                    ? 'bg-gray-500 text-white'
                                     : 'bg-gray-200 text-gray-700'
-                            }`}
+                            } flex items-center gap-2`}
                         >
+                            <i className="fas fa-box"></i>
                             Productos
                         </button>
                         <button
                             onClick={() => setActiveTab('ventas')}
                             className={`px-4 py-2 rounded-md ${
                                 activeTab === 'ventas'
-                                    ? 'bg-blue-500 text-white'
+                                    ? 'bg-gray-500 text-white'
                                     : 'bg-gray-200 text-gray-700'
-                            }`}
+                            } flex items-center gap-2`}
                         >
+                            <i className="fas fa-shopping-cart"></i>
                             Ventas
                         </button>
-                        <button 
-                            onClick={()=> setActiveTab('caja')}
+                        <button
+                            onClick={() => setActiveTab('caja')}
                             className={`px-4 py-2 rounded-md ${
                                 activeTab === 'caja'
-                                    ? 'bg-blue-500 text-white'
+                                    ? 'bg-gray-500 text-white'
                                     : 'bg-gray-200 text-gray-700'
-                            }`}>
+                            } flex items-center gap-2`}
+                        >
+                            <i className="fas fa-cash-register"></i>
                             Caja
                         </button>
                     </div>
                 </div>
             }
         >
-            <Head title="Dashboard" />
+            <Head title="GrayCode" />
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
