@@ -37,6 +37,9 @@ function CajaPage() {
         <button onClick={() => setModalVisible(true)} className="bg-blue-600 text-white px-4 py-2 rounded">
           Registrar Movimiento
         </button>
+        <button onClick={() => window.open("/reporte-caja/pdf", "_blank")} className="bg-yellow-600 text-white px-4 py-2 rounded">
+          Reporte
+        </button>
       </div>
 
       {balance && (

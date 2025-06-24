@@ -7,10 +7,13 @@ use Inertia\Inertia;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\VentaController;
 use App\Http\Controllers\Api\MovimientoCajaController;
+use App\Http\Controllers\Api\ReporteCajaController;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('/reporte-caja/pdf', [ReporteCajaController::class, 'exportarPDF']);
 
 Route::get('/login', function () {
     return Inertia::render('Auth/Login');
