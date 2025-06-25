@@ -4,20 +4,24 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Toast from '../Components/Toast';
 import VentaForm from '../Components/ventas/VentaForm';
+import Paginator from '../Components/Paginator';
 
 function VentasPage() {
   const [ventas, setVentas] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [toast, setToast] = useState({ message: "", onClose: () => {} });
+  const [meta, setMeta] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const cargarVentas = () => axios.get('/ventas/getAll').then(res => {
+  const cargarVentas = () => axios.get('/ventas/getAll?page=' + currentPage).then(res => {
     console.log(res.data);
-    setVentas(res.data);
+    setVentas(res.data.data);
+    setMeta(res.data);
   });
 
   useEffect(() => {
     cargarVentas();
-  }, []);
+  }, [currentPage]);
 
   const handleVentaRealizada = () => {
     cargarVentas();
@@ -75,6 +79,8 @@ function VentasPage() {
           </tbody>
         </table>
       </div>
+
+      <Paginator meta={meta} onPageChange={setCurrentPage} />
 
       <Modal visible={modalVisible} onClose={() => setModalVisible(false)}>
         <VentaForm

@@ -11,20 +11,26 @@ function ProductosPage() {
   const [modo, setModo] = useState("crear"); // o "editar"
   const [form, setForm] = useState({ nombre: "", precio_venta: "", stock: "", talle: "" });
   const [productoEditando, setProductoEditando] = useState(null);
-  const [meta, setMeta] = useState(null);
+  const [meta, setMeta] = useState({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+    per_page: 20
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [mostrarImportador, setMostrarImportador] = useState(false);
 
   const cargarProductos = () => {
     axios.get('/productos/getAll?page=' + currentPage).then(res => {
+      console.log('API Response:', res.data);
       setProductos(res.data.data);
-      setMeta(res.data.meta);
+      setMeta(res.data);
     });
   };
 
   useEffect(() => {
     cargarProductos();
-  }, [currentPage, meta]);
+  }, [currentPage]);
 
   const abrirModalCrear = () => {
     setModo("crear");

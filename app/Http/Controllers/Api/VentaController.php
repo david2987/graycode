@@ -15,9 +15,26 @@ use Illuminate\Support\Facades\Auth;
 
 class VentaController extends Controller
 {
-    public function getAll()
+    public function getAll(Request $request)
     {
-        return response()->json(Venta::with('detalles')->orderByDesc('fecha')->get());
+        $query = Venta::with('detalles');
+
+        // Aplicar filtros si se proporcionan
+        if ($request->input('desde')) {
+            $query->whereDate('fecha', '>=', $request->input('desde'));
+        }
+
+        if ($request->input('hasta')) {
+            $query->whereDate('fecha', '<=', $request->input('hasta'));
+        }
+
+        if ($request->filled('producto')) {
+            $query->whereHas('detalles.producto', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->producto . '%');
+            });
+        }
+
+        return response()->json($query->orderByDesc('fecha')->paginate(10));
     }
     public function filtrar(Request $request)
     {
