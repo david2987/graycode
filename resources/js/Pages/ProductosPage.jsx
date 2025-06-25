@@ -3,15 +3,17 @@ import Modal from '../Components/Modal';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Paginator from '../Components/Paginator';
+import ProductoImportador from '../Components/Productos/ProductoImportador';
 
 function ProductosPage() {
   const [productos, setProductos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [modo, setModo] = useState("crear"); // o "editar"
-  const [form, setForm] = useState({ nombre: "", precio_venta: "", stock: "" });
+  const [form, setForm] = useState({ nombre: "", precio_venta: "", stock: "", talle: "" });
   const [productoEditando, setProductoEditando] = useState(null);
   const [meta, setMeta] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [mostrarImportador, setMostrarImportador] = useState(false);
 
   const cargarProductos = () => {
     axios.get('/productos/getAll?page=' + currentPage).then(res => {
@@ -26,7 +28,7 @@ function ProductosPage() {
 
   const abrirModalCrear = () => {
     setModo("crear");
-    setForm({ nombre: "", precio_venta: "", stock: "" });
+    setForm({ nombre: "", precio_venta: "", stock: "", talle: "" });
     setModalVisible(true);
   };
 
@@ -36,11 +38,12 @@ function ProductosPage() {
       nombre: producto.nombre,
       precio_venta: producto.precio_venta,
       stock: producto.stock,
+      talle: producto.talle,
     });
     setProductoEditando(producto);
     setModalVisible(true);
     };
-    
+
     const handleDelete = async (id) => {
       if (!window.confirm("¿Eliminar producto?")) return;
       await axios.delete(`/productos/${id}`);
@@ -61,14 +64,33 @@ function ProductosPage() {
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Productos</h2>
-        <button
-          onClick={abrirModalCrear}
-          className="bg-green-600 text-white px-4 py-2 rounded"
-        >
-          <i className="fas fa-plus mr-2"></i> 
-          Agregar Producto
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMostrarImportador(!mostrarImportador)}
+            className="bg-purple-600 text-white px-4 py-2 rounded"
+          >
+            <i className="fas fa-upload mr-2"></i>
+            {mostrarImportador ? 'Ocultar Importador' : 'Importar Productos'}
+          </button>
+          <button
+            onClick={abrirModalCrear}
+            className="bg-green-600 text-white px-4 py-2 rounded"
+          >
+            <i className="fas fa-plus mr-2"></i>
+            Agregar Producto
+          </button>
+        </div>
       </div>
+
+      {mostrarImportador && (
+        <div className="bg-gray-50 p-4 rounded-lg mb-4 border">
+          <h3 className="text-lg font-semibold mb-2">Importar Productos desde Excel/CSV</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            El archivo debe contener las columnas: nombre, precio_venta, stock, talle
+          </p>
+          <ProductoImportador onImport={cargarProductos} />
+        </div>
+      )}
 
       <table className="w-full border mb-6">
         <thead className="bg-gray-100">
@@ -76,7 +98,8 @@ function ProductosPage() {
             <th>Nombre</th>
             <th>Precio</th>
             <th>Stock</th>
-            <th></th>
+            <th>Talle</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -85,6 +108,7 @@ function ProductosPage() {
               <td>{p.nombre}</td>
               <td>${p.precio_venta}</td>
               <td>{p.stock}</td>
+              <td>{p.talle}</td>
               <td>
                 <button
                   className="bg-blue-600 text-white px-2 py-2 rounded"
@@ -105,7 +129,7 @@ function ProductosPage() {
           ))}
         </tbody>
       </table>
-      
+
       <Paginator meta={meta} onPageChange={setCurrentPage} />
 
       {/* Modal */}

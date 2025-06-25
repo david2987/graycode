@@ -15,7 +15,7 @@ function CajaPage() {
       // axios.get("/caja/balance"),
     ]);
     setMovimientos(movRes.data);
-    setBalance(balRes.data);
+    // setBalance(balRes.data);
   };
 
   useEffect(() => {
@@ -36,7 +36,7 @@ function CajaPage() {
         <h2 className="text-2xl font-bold">Caja</h2>
         <div className="flex items-center">
           <button onClick={() => setModalVisible(true)} className="bg-green-600 text-white px-4 py-2 rounded">
-          <i className="fas fa-plus mr-2"></i> 
+          <i className="fas fa-plus mr-2"></i>
             Registrar Movimiento
           </button>
           <button onClick={() => window.open("/reporte-caja/pdf", "_blank")} className="ms-2 bg-yellow-600 text-white px-4 py-2 rounded">

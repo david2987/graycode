@@ -38,6 +38,8 @@ Route::middleware('auth')->group(function () {
 Route::prefix('productos')->group(function () {
     Route::get('/',  fn () => Inertia::render('ProductosPage'))->name('productos.index');
     Route::get('/getAll',[ProductoController::class, 'getAll']);
+    Route::get('/getAllForVentas',[ProductoController::class, 'getAllForVentas']);
+    Route::get('/plantilla', [ProductoController::class, 'descargarPlantilla']);
     Route::post('/', [ProductoController::class, 'store']);
     Route::get('{id}', [ProductoController::class, 'show']);
     Route::put('{id}', [ProductoController::class, 'update']);

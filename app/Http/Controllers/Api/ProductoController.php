@@ -13,13 +13,18 @@ class ProductoController extends Controller
     public function getAll(Request $request)
     {
         $search = $request->input('search');
-    $query = Producto::query();
+        $query = Producto::query();
 
-    if ($search) {
-        $query->where('nombre', 'like', "%{$search}%");
+        if ($search) {
+            $query->where('nombre', 'like', "%{$search}%");
+        }
+
+        return response()->json($query->orderBy('id', 'desc')->paginate(10));
     }
 
-    return response()->json($query->orderBy('id', 'desc')->paginate(10));
+    public function getAllForVentas()
+    {
+        return response()->json(Producto::orderBy('id', 'desc')->get());
     }
 
     public function store(Request $request)
@@ -55,17 +60,53 @@ class ProductoController extends Controller
         return response()->json(['message' => 'Producto eliminado']);
     }
 
+    public function importar(Request $request)
+    {
+        $request->validate([
+            'archivo' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
 
+        Excel::import(new ProductosImport, $request->file('archivo'));
 
-public function importar(Request $request)
-{
-    $request->validate([
-        'archivo' => 'required|file|mimes:xlsx,xls,csv',
-    ]);
+        return response()->json(['message' => 'Productos importados correctamente']);
+    }
 
-    Excel::import(new ProductosImport, $request->file('archivo'));
+    public function descargarPlantilla()
+    {
+        $headers = [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="plantilla_productos.xlsx"',
+        ];
 
-    return response()->json(['message' => 'Productos importados correctamente']);
-}
+        $data = [
+            ['nombre', 'precio_venta', 'stock', 'talle'],
+            ['Camiseta Básica', '25.50', '100', 'M'],
+            ['Pantalón Jeans', '45.00', '50', '32'],
+            ['Zapatillas Deportivas', '89.99', '30', '42'],
+        ];
 
+        return response()->download(
+            $this->crearArchivoExcel($data),
+            'plantilla_productos.xlsx',
+            $headers
+        )->deleteFileAfterSend();
+    }
+
+    private function crearArchivoExcel($data)
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        foreach ($data as $rowIndex => $row) {
+            foreach ($row as $colIndex => $value) {
+                $sheet->setCellValueByColumnAndRow($colIndex + 1, $rowIndex + 1, $value);
+            }
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $tempFile = tempnam(sys_get_temp_dir(), 'plantilla_productos');
+        $writer->save($tempFile);
+
+        return $tempFile;
+    }
 }

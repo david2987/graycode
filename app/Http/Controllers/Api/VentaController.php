@@ -48,8 +48,9 @@ class VentaController extends Controller
             'productos' => 'required|array|min:1',
             'productos.*.producto_id' => 'required|exists:productos,id',
             'productos.*.cantidad' => 'required|integer|min:1',
+            'productos.*.precio_venta' => 'required|numeric|min:0',
         ]);
-      
+
         DB::beginTransaction();
         try {
             // Calcular total
@@ -59,25 +60,25 @@ class VentaController extends Controller
                 if ($producto->stock < $item['cantidad']) {
                     throw new \Exception("No hay stock suficiente para el producto: {$producto->nombre}");
                 }
-                $total += $producto->precio_venta * $item['cantidad'];
+                $total += $item['precio_venta'] * $item['cantidad'];
             }
-            
-            
+
+
             // Crear la venta
             $venta = Venta::create([
                 'comprobante_externo' => $validated['comprobante_externo'],
                 'fecha' => Carbon::now(),
-                'total' => $total,               
+                'total' => $total,
             ]);
 
             // Detalles
             foreach ($validated['productos'] as $item) {
-                
+
                 DetalleVenta::create([
                     'venta_id' => $venta->id,
                     'producto_id' => $item['producto_id'],
                     'cantidad' => $item['cantidad'],
-                    'precio_unitario' => $producto->precio_venta,
+                    'precio_unitario' => $item['precio_venta'],
                 ]);
 
                 // Descontar stock
@@ -99,7 +100,7 @@ class VentaController extends Controller
             return response()->json($venta, 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 422);            
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 
