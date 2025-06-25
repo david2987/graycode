@@ -60,6 +60,9 @@ function VentasPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Total
               </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acciones
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -73,6 +76,16 @@ function VentasPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
                   ${v.total}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                  <button
+                    onClick={() => window.open(`/ventas/comprobante/${v.id}`, '_blank')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                    title="Imprimir Comprobante"
+                  >
+                    <i className="fas fa-print mr-1"></i>
+                    Imprimir
+                  </button>
                 </td>
               </tr>
             ))}

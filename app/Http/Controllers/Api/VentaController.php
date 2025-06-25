@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class VentaController extends Controller
 {
@@ -121,4 +122,20 @@ class VentaController extends Controller
         }
     }
 
+    public function generarComprobante($id)
+    {
+        try {
+            $venta = Venta::with('detalles.producto')->findOrFail($id);
+
+            $dompdf = new \Dompdf\Dompdf();
+            $html = view('comprobantes.venta', compact('venta'))->render();
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+
+            return $dompdf->stream("comprobante-venta-{$venta->id}.pdf");
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error al generar el comprobante: ' . $e->getMessage()], 500);
+        }
+    }
 }

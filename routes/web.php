@@ -50,6 +50,7 @@ Route::prefix('ventas')->group(function () {
     Route::post('/', [VentaController::class, 'store']);
     Route::get('/',  fn () => Inertia::render('VentasPage'))->name('ventas.index');
     Route::get('/getAll',[VentaController::class, 'getAll']);
+    Route::get('/comprobante/{id}', [VentaController::class, 'generarComprobante']);
     Route::get('{id}', [VentaController::class, 'show']);
 });
 
