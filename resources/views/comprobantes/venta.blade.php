@@ -78,6 +78,10 @@
             border-top: 1px solid #333;
             padding-top: 5px;
         }
+        .descuento {
+            color: #059669;
+            font-weight: bold;
+        }
         .footer {
             margin-top: 30px;
             text-align: center;
@@ -100,6 +104,9 @@
             <div class="venta-number">Venta #{{ $venta->id }}</div>
             <div><strong>Comprobante:</strong> {{ $venta->comprobante_externo }}</div>
             <div><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y H:i:s') }}</div>
+            @if($venta->motivo_descuento)
+                <div><strong>Motivo Descuento:</strong> {{ $venta->motivo_descuento }}</div>
+            @endif
         </div>
     </div>
 
@@ -129,15 +136,37 @@
     <div class="total-section">
         <div class="total-row">
             <span>Subtotal:</span>
-            <span>${{ number_format($venta->total, 2) }}</span>
+            <span>${{ number_format($venta->subtotal ?? $venta->total, 2) }}</span>
         </div>
+        
+        @if(($venta->descuento_porcentaje ?? 0) > 0)
+        <div class="total-row descuento">
+            <span>Descuento ({{ $venta->descuento_porcentaje }}%):</span>
+            <span>-${{ number_format(($venta->subtotal ?? $venta->total) * ($venta->descuento_porcentaje / 100), 2) }}</span>
+        </div>
+        @endif
+        
+        @if(($venta->descuento_monto ?? 0) > 0)
+        <div class="total-row descuento">
+            <span>Descuento (Monto fijo):</span>
+            <span>-${{ number_format($venta->descuento_monto, 2) }}</span>
+        </div>
+        @endif
+        
+        @if(($venta->descuento_porcentaje ?? 0) > 0 || ($venta->descuento_monto ?? 0) > 0)
+        <div class="total-row descuento">
+            <span>Total Descuentos:</span>
+            <span>-${{ number_format((($venta->subtotal ?? $venta->total) * (($venta->descuento_porcentaje ?? 0) / 100)) + ($venta->descuento_monto ?? 0), 2) }}</span>
+        </div>
+        @endif
+        
         <div class="total-row">
             <span>IVA (0%):</span>
             <span>$0.00</span>
         </div>
         <div class="total-row total-final">
             <span>TOTAL:</span>
-            <span>${{ number_format($venta->total, 2) }}</span>
+            <span>${{ number_format($venta->total_final ?? $venta->total, 2) }}</span>
         </div>
     </div>
 

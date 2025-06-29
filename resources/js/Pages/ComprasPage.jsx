@@ -95,7 +95,11 @@ function ComprasPage() {
 
       <Paginator meta={meta} onPageChange={setCurrentPage} />
 
-      <Modal visible={modalVisible} onClose={() => setModalVisible(false)}>
+      <Modal 
+        visible={modalVisible} 
+        onClose={() => setModalVisible(false)}
+        title="Registrar Nueva Compra"
+      >
         <CompraForm
           onCompraRealizada={handleCompraRealizada}
           onClose={() => setModalVisible(false)}

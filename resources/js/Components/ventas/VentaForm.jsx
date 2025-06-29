@@ -10,6 +10,12 @@ export default function VentaForm({ onVentaRealizada, onClose }) {
   const [loading, setLoading] = useState(false);
   const [mostrarBusqueda, setMostrarBusqueda] = useState(false);
   const [ventaCreada, setVentaCreada] = useState(null);
+  const [mostrarDescuentos, setMostrarDescuentos] = useState(false);
+  const [descuentos, setDescuentos] = useState({
+    porcentaje: 0,
+    monto: 0,
+    motivo: ""
+  });
   const buscadorRef = useRef(null);
 
   useEffect(() => {
@@ -54,63 +60,53 @@ export default function VentaForm({ onVentaRealizada, onClose }) {
   }, [busqueda, productos]);
 
   const agregarProducto = (producto) => {
-    const existente = detalleVenta.find((d) => d.producto_id === producto.id);
-
-    if (existente) {
-      // Si ya existe, aumentar cantidad
-      const actualizada = detalleVenta.map((d) =>
-        d.producto_id === producto.id
-          ? { ...d, cantidad: d.cantidad + 1 }
-          : d
-      );
-      setDetalleVenta(actualizada);
-    } else {
-      // Si no existe, agregar nuevo
-      setDetalleVenta([
-        ...detalleVenta,
-        {
-          producto_id: producto.id,
-          nombre: producto.nombre,
-          precio_venta: producto.precio_venta,
-          cantidad: 1,
-          stock_disponible: producto.stock,
-          talle: producto.talle
-        },
-      ]);
+    const existe = detalleVenta.find(p => p.producto_id === producto.id);
+    if (existe) {
+      alert("Este producto ya está en la lista");
+      return;
     }
 
+    setDetalleVenta([
+      ...detalleVenta,
+      {
+        producto_id: producto.id,
+        nombre: producto.nombre,
+        talle: producto.talle,
+        cantidad: 1,
+        precio_venta: parseFloat(producto.precio_venta) || 0,
+        stock_disponible: parseInt(producto.stock) || 0,
+      },
+    ]);
     setBusqueda("");
     setMostrarBusqueda(false);
   };
 
   const actualizarCantidad = (productoId, nuevaCantidad) => {
-    if (nuevaCantidad < 1) return;
-
-    const item = detalleVenta.find(d => d.producto_id === productoId);
-    if (nuevaCantidad > item.stock_disponible) {
-      alert(`Solo hay ${item.stock_disponible} unidades disponibles de ${item.nombre}`);
-      return;
-    }
-
-    setDetalleVenta(detalleVenta.map(d =>
-      d.producto_id === productoId
-        ? { ...d, cantidad: parseInt(nuevaCantidad) }
-        : d
-    ));
+    const cantidad = parseInt(nuevaCantidad) || 0;
+    if (cantidad < 1) return;
+    
+    const nuevosDetalles = detalleVenta.map((item) =>
+      item.producto_id === productoId
+        ? { ...item, cantidad: cantidad }
+        : item
+    );
+    setDetalleVenta(nuevosDetalles);
   };
 
   const actualizarPrecio = (productoId, nuevoPrecio) => {
-    if (nuevoPrecio < 0) return;
-
-    setDetalleVenta(detalleVenta.map(d =>
-      d.producto_id === productoId
-        ? { ...d, precio_venta: parseFloat(nuevoPrecio) }
-        : d
-    ));
+    const precio = parseFloat(nuevoPrecio) || 0;
+    if (precio < 0) return;
+    
+    const nuevosDetalles = detalleVenta.map((item) =>
+      item.producto_id === productoId
+        ? { ...item, precio_venta: precio }
+        : item
+    );
+    setDetalleVenta(nuevosDetalles);
   };
 
   const quitarProducto = (productoId) => {
-    setDetalleVenta(detalleVenta.filter((p) => p.producto_id !== productoId));
+    setDetalleVenta(detalleVenta.filter((item) => item.producto_id !== productoId));
   };
 
   const enviarVenta = async () => {
@@ -131,15 +127,19 @@ export default function VentaForm({ onVentaRealizada, onClose }) {
         comprobante_externo: comprobanteExterno,
         productos: detalleVenta.map((p) => ({
           producto_id: p.producto_id,
-          cantidad: p.cantidad,
-          precio_venta: p.precio_venta,
+          cantidad: parseInt(p.cantidad) || 0,
+          precio_venta: parseFloat(p.precio_venta) || 0,
         })),
+        descuento_porcentaje: parseFloat(descuentos.porcentaje) > 0 ? parseFloat(descuentos.porcentaje) : null,
+        descuento_monto: parseFloat(descuentos.monto) > 0 ? parseFloat(descuentos.monto) : null,
+        motivo_descuento: descuentos.motivo || null,
       };
 
       const response = await axios.post("/ventas", ventaPayload);
       alert("¡Venta registrada correctamente!");
       setDetalleVenta([]);
       setComprobanteExterno("");
+      setDescuentos({ porcentaje: 0, monto: 0, motivo: "" });
       onVentaRealizada();
       onClose();
       setVentaCreada(response.data.id);
@@ -151,237 +151,354 @@ export default function VentaForm({ onVentaRealizada, onClose }) {
     }
   };
 
-  const total = detalleVenta.reduce(
-    (sum, p) => sum + p.precio_venta * p.cantidad,
+  // Calcular totales con validación
+  const subtotal = detalleVenta.reduce(
+    (sum, p) => {
+      const precio = parseFloat(p.precio_venta) || 0;
+      const cantidad = parseInt(p.cantidad) || 0;
+      return sum + (precio * cantidad);
+    },
     0
   );
+  
+  const porcentajeDescuento = parseFloat(descuentos.porcentaje) || 0;
+  const montoDescuento = parseFloat(descuentos.monto) || 0;
+  
+  const descuentoPorcentajeCalculado = subtotal * (porcentajeDescuento / 100);
+  const descuentoTotal = descuentoPorcentajeCalculado + montoDescuento;
+  const totalFinal = Math.max(0, subtotal - descuentoTotal);
+
+  if (ventaCreada) {
+    return (
+      <div className="text-center p-6">
+        <div className="text-green-600 text-2xl mb-4">
+          <i className="fas fa-check-circle"></i>
+        </div>
+        <h3 className="text-lg font-semibold mb-2">¡Venta registrada exitosamente!</h3>
+        <p className="text-gray-600 mb-4">Venta #{ventaCreada}</p>
+        <div className="space-x-2">
+          <button
+            onClick={() => window.open(`/ventas/comprobante/${ventaCreada}`, '_blank')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            <i className="fas fa-print mr-2"></i>
+            Imprimir Comprobante
+          </button>
+          <button
+            onClick={() => {
+              setVentaCreada(null);
+              onClose();
+            }}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-6 bg-white rounded-lg shadow-lg max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center border-b pb-4">
-        <h2 className="text-2xl font-bold text-gray-800">Registrar Nueva Venta</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <i className="fas fa-times text-xl"></i>
-        </button>
-      </div>
-
-      {ventaCreada ? (
-        /* Sección de éxito */
-        <div className="text-center py-8">
-          <div className="mb-4">
-            <i className="fas fa-check-circle text-6xl text-green-500"></i>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">¡Venta Registrada Exitosamente!</h3>
-          <p className="text-gray-600 mb-6">La venta ha sido guardada en el sistema.</p>
-
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={() => window.open(`/ventas/comprobante/${ventaCreada}`, '_blank')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium"
-            >
-              <i className="fas fa-print mr-2"></i>
-              Imprimir Comprobante
-            </button>
-            <button
-              onClick={() => {
-                setVentaCreada(null);
-                onClose();
-              }}
-              className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium"
-            >
-              Cerrar
-            </button>
+    <div className="space-y-6">
+      {/* Comprobante Externo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Comprobante Externo *
+          </label>
+          <input
+            type="text"
+            value={comprobanteExterno}
+            onChange={(e) => setComprobanteExterno(e.target.value)}
+            placeholder="Ej: FACT-001, TICKET-123"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        <div className="flex items-end">
+          <div className="bg-blue-50 p-3 rounded-md w-full">
+            <div className="text-sm text-blue-800">
+              <strong>Total Final:</strong> ${totalFinal.toFixed(2)}
+            </div>
           </div>
         </div>
-      ) : (
-        /* Formulario de venta */
-        <>
-          {/* Comprobante Externo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      </div>
+
+      {/* Buscador de Productos */}
+      <div className="relative" ref={buscadorRef}>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Buscar y Agregar Productos
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            value={busqueda}
+            onChange={(e) => {
+              setBusqueda(e.target.value);
+              setMostrarBusqueda(true);
+            }}
+            onFocus={() => setMostrarBusqueda(true)}
+            placeholder="Escriba para buscar productos por nombre o talle..."
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="absolute right-3 top-2">
+            <i className="fas fa-search text-gray-400"></i>
+          </div>
+        </div>
+
+        {/* Dropdown de resultados de búsqueda */}
+        {mostrarBusqueda && busqueda && productosFiltrados.length > 0 && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+            {productosFiltrados.map((producto) => (
+              <div
+                key={producto.id}
+                onClick={() => agregarProducto(producto)}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-medium">{producto.nombre}</div>
+                    <div className="text-sm text-gray-600">
+                      Talle: {producto.talle} | Stock: {producto.stock} | ${producto.precio_venta}
+                    </div>
+                  </div>
+                  <div className="text-green-600">
+                    <i className="fas fa-plus"></i>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Grilla de Productos */}
+      {detalleVenta.length > 0 && (
+        <div className="border rounded-lg overflow-hidden">
+          <div className="bg-gray-50 px-4 py-3 border-b">
+            <h3 className="font-semibold text-gray-800">Productos en la Venta</h3>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Producto</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Talle</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Cantidad</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Precio Unit.</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Subtotal</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detalleVenta.map((item, index) => (
+                  <tr key={item.producto_id} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div>
+                        <div className="font-medium text-gray-900">{item.nombre}</div>
+                        <div className="text-sm text-gray-500">Stock: {item.stock_disponible}</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-700">
+                      {item.talle}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="number"
+                        min="1"
+                        max={item.stock_disponible}
+                        value={item.cantidad}
+                        onChange={(e) => actualizarCantidad(item.producto_id, e.target.value)}
+                        className="w-20 text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.precio_venta}
+                        onChange={(e) => actualizarPrecio(item.producto_id, e.target.value)}
+                        className="w-24 text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-center font-medium text-gray-900">
+                      ${((parseFloat(item.precio_venta) || 0) * (parseInt(item.cantidad) || 0)).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={() => quitarProducto(item.producto_id)}
+                        className="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50"
+                        title="Quitar producto"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Botón para mostrar/ocultar descuentos */}
+      {detalleVenta.length > 0 && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => setMostrarDescuentos(!mostrarDescuentos)}
+            className="flex items-center gap-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg transition-colors"
+          >
+            <i className={`fas fa-tags ${mostrarDescuentos ? 'text-yellow-600' : 'text-yellow-500'}`}></i>
+            <span>{mostrarDescuentos ? 'Ocultar' : 'Mostrar'} Descuentos y Promociones</span>
+            <i className={`fas fa-chevron-${mostrarDescuentos ? 'up' : 'down'} text-sm`}></i>
+          </button>
+        </div>
+      )}
+
+      {/* Sección de Descuentos (condicional) */}
+      {detalleVenta.length > 0 && mostrarDescuentos && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-medium text-yellow-800 mb-3">
+            <i className="fas fa-tags mr-2"></i>
+            Descuentos y Promociones
+          </h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Comprobante Externo *
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descuento % (0-100)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={descuentos.porcentaje}
+                onChange={(e) => setDescuentos({
+                  ...descuentos,
+                  porcentaje: parseFloat(e.target.value) || 0
+                })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0.00"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Descuento $ (Monto fijo)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={descuentos.monto}
+                onChange={(e) => setDescuentos({
+                  ...descuentos,
+                  monto: parseFloat(e.target.value) || 0
+                })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0.00"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Motivo del Descuento
               </label>
               <input
                 type="text"
-                value={comprobanteExterno}
-                onChange={(e) => setComprobanteExterno(e.target.value)}
-                placeholder="Ej: FACT-001, TICKET-123"
+                value={descuentos.motivo}
+                onChange={(e) => setDescuentos({
+                  ...descuentos,
+                  motivo: e.target.value
+                })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
+                placeholder="Ej: Cliente frecuente, Promoción"
               />
-            </div>
-            <div className="flex items-end">
-              <div className="bg-blue-50 p-3 rounded-md w-full">
-                <div className="text-sm text-blue-800">
-                  <strong>Total de la Venta:</strong> ${total.toFixed(2)}
-                </div>
-              </div>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Buscador de Productos */}
-          <div className="relative" ref={buscadorRef}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Buscar y Agregar Productos
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={busqueda}
-                onChange={(e) => {
-                  setBusqueda(e.target.value);
-                  setMostrarBusqueda(true);
-                }}
-                onFocus={() => setMostrarBusqueda(true)}
-                placeholder="Escriba para buscar productos por nombre o talle..."
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <div className="absolute right-3 top-2">
-                <i className="fas fa-search text-gray-400"></i>
-              </div>
+      {/* Resumen de Totales */}
+      {detalleVenta.length > 0 && (
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <h4 className="font-medium text-gray-800 mb-3">Resumen de Totales</h4>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Subtotal:</span>
+              <span className="font-medium">${subtotal.toFixed(2)}</span>
             </div>
-
-            {/* Dropdown de resultados de búsqueda */}
-            {mostrarBusqueda && busqueda && productosFiltrados.length > 0 && (
-              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                {productosFiltrados.map((producto) => (
-                  <div
-                    key={producto.id}
-                    onClick={() => agregarProducto(producto)}
-                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium">{producto.nombre}</div>
-                        <div className="text-sm text-gray-600">
-                          Talle: {producto.talle} | Stock: {producto.stock} | ${producto.precio_venta}
-                        </div>
-                      </div>
-                      <div className="text-green-600">
-                        <i className="fas fa-plus"></i>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            
+            {porcentajeDescuento > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Descuento ({porcentajeDescuento}%):</span>
+                <span>-${descuentoPorcentajeCalculado.toFixed(2)}</span>
               </div>
             )}
-          </div>
-
-          {/* Grilla de Productos */}
-          {detalleVenta.length > 0 && (
-            <div className="border rounded-lg overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b">
-                <h3 className="font-semibold text-gray-800">Productos en la Venta</h3>
+            
+            {montoDescuento > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Descuento (Monto fijo):</span>
+                <span>-${montoDescuento.toFixed(2)}</span>
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Producto</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Talle</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Cantidad</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Precio Unit.</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Subtotal</th>
-                      <th className="px-4 py-3 text-center text-sm font-medium text-gray-700">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detalleVenta.map((item, index) => (
-                      <tr key={item.producto_id} className="border-b border-gray-200 hover:bg-gray-50">
-                        <td className="px-4 py-3">
-                          <div>
-                            <div className="font-medium text-gray-900">{item.nombre}</div>
-                            <div className="text-sm text-gray-500">Stock: {item.stock_disponible}</div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center text-gray-700">
-                          {item.talle}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <input
-                            type="number"
-                            min="1"
-                            max={item.stock_disponible}
-                            value={item.cantidad}
-                            onChange={(e) => actualizarCantidad(item.producto_id, e.target.value)}
-                            className="w-20 text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.precio_venta}
-                            onChange={(e) => actualizarPrecio(item.producto_id, e.target.value)}
-                            className="w-24 text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-center font-medium text-gray-900">
-                          ${(item.precio_venta * item.cantidad).toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <button
-                            onClick={() => quitarProducto(item.producto_id)}
-                            className="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50"
-                            title="Quitar producto"
-                          >
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            )}
+            
+            {descuentoTotal > 0 && (
+              <div className="flex justify-between text-green-600 font-medium border-t pt-2">
+                <span>Total Descuentos:</span>
+                <span>-${descuentoTotal.toFixed(2)}</span>
               </div>
-            </div>
-          )}
-
-          {/* Resumen y Botones */}
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-lg">
-              <span className="font-medium text-gray-700">Total a Pagar: </span>
-              <span className="font-bold text-2xl text-blue-600">${total.toFixed(2)}</span>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={enviarVenta}
-                disabled={loading || detalleVenta.length === 0}
-                className={`px-6 py-2 rounded-md text-white ${
-                  loading || detalleVenta.length === 0
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700'
-                }`}
-              >
-                {loading ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-check mr-2"></i>
-                    Confirmar Venta
-                  </>
-                )}
-              </button>
+            )}
+            
+            <div className="flex justify-between text-lg font-bold border-t pt-2">
+              <span>Total Final:</span>
+              <span className="text-blue-600">${totalFinal.toFixed(2)}</span>
             </div>
           </div>
-        </>
+        </div>
       )}
+
+      {/* Botones de acción */}
+      <div className="flex justify-between items-center pt-4 border-t">
+        <div className="text-lg">
+          <span className="font-medium text-gray-700">Total a Pagar: </span>
+          <span className="font-bold text-2xl text-blue-600">${totalFinal.toFixed(2)}</span>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={enviarVenta}
+            disabled={loading || detalleVenta.length === 0}
+            className={`px-6 py-2 rounded-md text-white ${
+              loading || detalleVenta.length === 0
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-green-600 hover:bg-green-700'
+            }`}
+          >
+            {loading ? (
+              <>
+                <i className="fas fa-spinner fa-spin mr-2"></i>
+                Procesando...
+              </>
+            ) : (
+              <>
+                <i className="fas fa-check mr-2"></i>
+                Confirmar Venta
+              </>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -95,7 +95,11 @@ function VentasPage() {
 
       <Paginator meta={meta} onPageChange={setCurrentPage} />
 
-      <Modal visible={modalVisible} onClose={() => setModalVisible(false)}>
+      <Modal 
+        visible={modalVisible} 
+        onClose={() => setModalVisible(false)}
+        title="Registrar Nueva Venta"
+      >
         <VentaForm
           onVentaRealizada={handleVentaRealizada}
           onClose={() => setModalVisible(false)}

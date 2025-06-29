@@ -12,14 +12,70 @@ class ProductoController extends Controller
 {
     public function getAll(Request $request)
     {
-        $search = $request->input('search');
         $query = Producto::query();
 
-        if ($search) {
-            $query->where('nombre', 'like', "%{$search}%");
+        // Búsqueda general (nombre, talle)
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('talle', 'like', "%{$search}%");
+            });
         }
 
-        return response()->json($query->orderBy('id', 'desc')->paginate(10));
+        // Filtro por nombre específico
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', "%{$request->nombre}%");
+        }
+
+        // Filtro por talle específico
+        if ($request->filled('talle')) {
+            $query->where('talle', 'like', "%{$request->talle}%");
+        }
+
+        // Filtro por rango de precios
+        if ($request->filled('precio_min')) {
+            $query->where('precio_venta', '>=', $request->precio_min);
+        }
+        if ($request->filled('precio_max')) {
+            $query->where('precio_venta', '<=', $request->precio_max);
+        }
+
+        // Filtro por rango de stock
+        if ($request->filled('stock_min')) {
+            $query->where('stock', '>=', $request->stock_min);
+        }
+        if ($request->filled('stock_max')) {
+            $query->where('stock', '<=', $request->stock_max);
+        }
+
+        // Filtro por stock bajo (productos con poco stock)
+        if ($request->filled('stock_bajo') && $request->stock_bajo) {
+            $query->where('stock', '<=', 10);
+        }
+
+        // Filtro por stock agotado
+        if ($request->filled('stock_agotado') && $request->stock_agotado) {
+            $query->where('stock', '=', 0);
+        }
+
+        // Ordenamiento
+        $sortBy = $request->input('sort_by', 'id');
+        $sortOrder = $request->input('sort_order', 'desc');
+        
+        // Validar campos de ordenamiento permitidos
+        $allowedSortFields = ['id', 'nombre', 'precio_venta', 'stock', 'talle', 'created_at'];
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'id';
+        }
+        
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Paginación
+        $perPage = $request->input('per_page', 10);
+        $perPage = min(max($perPage, 5), 100); // Limitar entre 5 y 100
+
+        return response()->json($query->paginate($perPage));
     }
 
     public function getAllForVentas()

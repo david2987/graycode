@@ -67,31 +67,53 @@ class VentaController extends Controller
             'productos.*.producto_id' => 'required|exists:productos,id',
             'productos.*.cantidad' => 'required|integer|min:1',
             'productos.*.precio_venta' => 'required|numeric|min:0',
+            'descuento_porcentaje' => 'nullable|numeric|min:0|max:100',
+            'descuento_monto' => 'nullable|numeric|min:0',
+            'motivo_descuento' => 'nullable|string|max:255',
         ]);
 
         DB::beginTransaction();
         try {
-            // Calcular total
-            $total = 0;
+            // Calcular subtotal
+            $subtotal = 0;
             foreach ($validated['productos'] as $item) {
                 $producto = \App\Models\Producto::find($item['producto_id']);
                 if ($producto->stock < $item['cantidad']) {
                     throw new \Exception("No hay stock suficiente para el producto: {$producto->nombre}");
                 }
-                $total += $item['precio_venta'] * $item['cantidad'];
+                $subtotal += $item['precio_venta'] * $item['cantidad'];
             }
 
+            // Calcular descuentos
+            $descuentoPorcentaje = $validated['descuento_porcentaje'] ?? 0;
+            $descuentoMonto = $validated['descuento_monto'] ?? 0;
+            
+            $descuentoPorcentajeCalculado = $subtotal * ($descuentoPorcentaje / 100);
+            $descuentoTotal = $descuentoPorcentajeCalculado + $descuentoMonto;
+            
+            // Calcular total final
+            $totalFinal = $subtotal - $descuentoTotal;
+            
+            // Asegurar que el total final no sea negativo
+            if ($totalFinal < 0) {
+                $totalFinal = 0;
+                $descuentoTotal = $subtotal;
+            }
 
             // Crear la venta
             $venta = Venta::create([
                 'comprobante_externo' => $validated['comprobante_externo'],
                 'fecha' => Carbon::now(),
-                'total' => $total,
+                'total' => $totalFinal, // Mantener compatibilidad
+                'subtotal' => $subtotal,
+                'descuento_porcentaje' => $descuentoPorcentaje,
+                'descuento_monto' => $descuentoMonto,
+                'total_final' => $totalFinal,
+                'motivo_descuento' => $validated['motivo_descuento'] ?? null,
             ]);
 
             // Detalles
             foreach ($validated['productos'] as $item) {
-
                 DetalleVenta::create([
                     'venta_id' => $venta->id,
                     'producto_id' => $item['producto_id'],
@@ -105,11 +127,12 @@ class VentaController extends Controller
                 $producto->save();
             }
 
-            // Agregar ingreso en la caja
+            // Agregar ingreso en la caja (solo el total final)
             MovimientoCaja::create([
                 'tipo' => 'ingreso',
-                'monto' => $total,
-                'descripcion' => "Venta ID {$venta->id} - Comprobante {$venta->comprobante_externo}",
+                'monto' => $totalFinal,
+                'descripcion' => "Venta ID {$venta->id} - Comprobante {$venta->comprobante_externo}" . 
+                               ($descuentoTotal > 0 ? " (Descuento: ${$descuentoTotal})" : ""),
                 'fecha' => Carbon::now(),
             ]);
 
