@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\VentaController;
+use App\Http\Controllers\Api\CompraController;
 use App\Http\Controllers\Api\MovimientoCajaController;
 use App\Http\Controllers\Api\ReporteCajaController;
 
@@ -46,6 +47,14 @@ Route::prefix('productos')->group(function () {
     Route::delete('{id}', [ProductoController::class, 'destroy']);
 });
 
+Route::prefix('compras')->group(function () {
+    Route::post('/', [CompraController::class, 'store']);
+    Route::get('/',  fn () => Inertia::render('ComprasPage'))->name('compras.index');
+    Route::get('/getAll',[CompraController::class, 'getAll']);
+    Route::get('/comprobante/{id}', [CompraController::class, 'generarComprobante']);
+    Route::get('{id}', [CompraController::class, 'show']);
+});
+
 Route::prefix('ventas')->group(function () {
     Route::post('/', [VentaController::class, 'store']);
     Route::get('/',  fn () => Inertia::render('VentasPage'))->name('ventas.index');
@@ -64,6 +73,7 @@ Route::prefix('caja')->group(function () {
 
 Route::get('/caja/reporte-diario', [MovimientoCajaController::class, 'reporteDiario']);
 Route::get('/ventas/filtrar', [VentaController::class, 'filtrar']);
+Route::get('/compras/filtrar', [CompraController::class, 'filtrar']);
 Route::post('/productos/importar', [ProductoController::class, 'importar']);
 
 

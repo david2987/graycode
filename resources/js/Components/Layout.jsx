@@ -9,6 +9,7 @@ export default function Layout({ children }) {
           <h1 className="text-xl font-bold">Sistema de Caja - Local de Ropa</h1>
           <nav className="space-x-4">
             <Link href="/productos" className="text-blue-600 hover:underline">Productos</Link>
+            <Link href="/compras" className="text-blue-600 hover:underline">Compras</Link>
             <Link href="/ventas" className="text-blue-600 hover:underline">Ventas</Link>
             <Link href="/caja" className="text-blue-600 hover:underline">Caja</Link>
           </nav>

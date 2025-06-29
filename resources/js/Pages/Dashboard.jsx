@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ProductosPage from './ProductosPage';
 import VentasPage from './VentasPage';
 import CajaPage from './CajaPage';
+import ComprasPage from './ComprasPage';
 
 export default function Dashboard() {
     const [activeTab, setActiveTab] = useState('productos');
@@ -16,6 +17,8 @@ export default function Dashboard() {
                 return <ProductosPage />;
             case 'ventas':
                 return <VentasPage />;
+            case 'compras':
+                return <ComprasPage />;
             default:
                 return <div>Contenido por defecto</div>;
         }
@@ -58,6 +61,17 @@ export default function Dashboard() {
                         >
                             <i className="fas fa-cash-register"></i>
                             Caja
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('compras')}
+                            className={`px-4 py-2 rounded-md ${
+                                activeTab === 'compras'
+                                    ? 'bg-gray-500 text-white'
+                                    : 'bg-gray-200 text-gray-700'
+                            } flex items-center gap-2`}
+                        >
+                            <i className="fas fa-shopping-cart"></i>
+                            Compras
                         </button>
                     </div>
                 </div>
