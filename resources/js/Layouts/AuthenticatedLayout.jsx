@@ -11,6 +11,31 @@ export default function AuthenticatedLayout({ header, children }) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
+    // Función para verificar si el usuario puede acceder a una funcionalidad
+    const canAccess = (feature) => {
+        const permissions = {
+            dashboard: ['administrador', 'vendedor1', 'vendedor2'],
+            ventas: ['administrador', 'vendedor1', 'vendedor2'],
+            compras: ['administrador'],
+            productos: ['administrador', 'vendedor1'],
+            caja: ['administrador'],
+            reportes: ['administrador'],
+            usuarios: ['administrador'],
+        };
+
+        return permissions[feature]?.includes(user.role) || false;
+    };
+
+    // Función para obtener el nombre del rol
+    const getRoleDisplayName = (role) => {
+        const roleNames = {
+            'administrador': 'Administrador',
+            'vendedor1': 'Vendedor 1',
+            'vendedor2': 'Vendedor 2'
+        };
+        return roleNames[role] || 'Usuario';
+    };
+
     return (
         <div className="min-h-screen bg-gray-100">
             <nav className="border-b border-gray-100" style={{ backgroundColor: '#f0f0f0' }}>
@@ -31,6 +56,54 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <h2 className="text-xl font-semibold leading-tight text-gray-800">GrayCode</h2>
                                 </NavLink>
                             </div>
+
+                            {/* Navegación principal */}
+                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                                {canAccess('ventas') && (
+                                    <NavLink
+                                        href={route('ventas.index')}
+                                        active={route().current('ventas.index')}
+                                    >
+                                        Ventas
+                                    </NavLink>
+                                )}
+                                
+                                {canAccess('compras') && (
+                                    <NavLink
+                                        href={route('compras.index')}
+                                        active={route().current('compras.index')}
+                                    >
+                                        Compras
+                                    </NavLink>
+                                )}
+                                
+                                {canAccess('productos') && (
+                                    <NavLink
+                                        href={route('productos.index')}
+                                        active={route().current('productos.index')}
+                                    >
+                                        Productos
+                                    </NavLink>
+                                )}
+                                
+                                {canAccess('caja') && (
+                                    <NavLink
+                                        href={route('caja.index')}
+                                        active={route().current('caja.index')}
+                                    >
+                                        Caja
+                                    </NavLink>
+                                )}
+                                
+                                {canAccess('usuarios') && (
+                                    <NavLink
+                                        href={route('users.index')}
+                                        active={route().current('users.index')}
+                                    >
+                                        Usuarios
+                                    </NavLink>
+                                )}
+                            </div>
                         </div>
 
                         <div className="hidden sm:ms-6 sm:flex sm:items-center">
@@ -42,7 +115,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 type="button"
                                                 className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
                                             >
-                                                {user.name}
+                                                <div className="text-left">
+                                                    <div className="font-medium">{user.name}</div>
+                                                    <div className="text-xs text-gray-400">{getRoleDisplayName(user.role)}</div>
+                                                </div>
 
                                                 <svg
                                                     className="-me-0.5 ms-2 h-4 w-4"
@@ -134,6 +210,51 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Inicio
                         </ResponsiveNavLink>
+                        
+                        {canAccess('ventas') && (
+                            <ResponsiveNavLink
+                                href={route('ventas.index')}
+                                active={route().current('ventas.index')}
+                            >
+                                Ventas
+                            </ResponsiveNavLink>
+                        )}
+                        
+                        {canAccess('compras') && (
+                            <ResponsiveNavLink
+                                href={route('compras.index')}
+                                active={route().current('compras.index')}
+                            >
+                                Compras
+                            </ResponsiveNavLink>
+                        )}
+                        
+                        {canAccess('productos') && (
+                            <ResponsiveNavLink
+                                href={route('productos.index')}
+                                active={route().current('productos.index')}
+                            >
+                                Productos
+                            </ResponsiveNavLink>
+                        )}
+                        
+                        {canAccess('caja') && (
+                            <ResponsiveNavLink
+                                href={route('caja.index')}
+                                active={route().current('caja.index')}
+                            >
+                                Caja
+                            </ResponsiveNavLink>
+                        )}
+                        
+                        {canAccess('usuarios') && (
+                            <ResponsiveNavLink
+                                href={route('users.index')}
+                                active={route().current('users.index')}
+                            >
+                                Usuarios
+                            </ResponsiveNavLink>
+                        )}
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
@@ -144,11 +265,14 @@ export default function AuthenticatedLayout({ header, children }) {
                             <div className="text-sm font-medium text-gray-500">
                                 {user.email}
                             </div>
+                            <div className="text-xs text-gray-400">
+                                {getRoleDisplayName(user.role)}
+                            </div>
                         </div>
 
                         <div className="mt-3 space-y-1">
                             <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
+                                Perfil
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 method="post"

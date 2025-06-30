@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Tighten\Ziggy\Ziggy;
+use Inertia\Inertia;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -40,5 +41,19 @@ class HandleInertiaRequests extends Middleware
                 'location' => $request->url(),
             ],
         ];
+    }
+
+    /**
+     * Handle the response before sending it to the browser.
+     */
+    public function render($request, \Closure $next)
+    {
+        $response = $next($request);
+
+        if ($response->status() === 403) {
+            return Inertia::render('Error403');
+        }
+
+        return $response;
     }
 }
