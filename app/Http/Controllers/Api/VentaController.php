@@ -35,6 +35,23 @@ class VentaController extends Controller
             });
         }
 
+        // Nuevos filtros
+        if ($request->filled('forma_pago')) {
+            $query->where('forma_pago', $request->input('forma_pago'));
+        }
+
+        if ($request->filled('monto_min')) {
+            $query->where('total', '>=', $request->input('monto_min'));
+        }
+
+        if ($request->filled('monto_max')) {
+            $query->where('total', '<=', $request->input('monto_max'));
+        }
+
+        if ($request->filled('comprobante')) {
+            $query->where('comprobante_externo', 'like', '%' . $request->input('comprobante') . '%');
+        }
+
         return response()->json($query->orderByDesc('fecha')->paginate(10));
     }
     public function filtrar(Request $request)
@@ -70,6 +87,7 @@ class VentaController extends Controller
             'descuento_porcentaje' => 'nullable|numeric|min:0|max:100',
             'descuento_monto' => 'nullable|numeric|min:0',
             'motivo_descuento' => 'nullable|string|max:255',
+            'forma_pago' => 'required|in:efectivo,transferencia,tarjeta_debito,tarjeta_credito',
         ]);
 
         DB::beginTransaction();
@@ -110,6 +128,7 @@ class VentaController extends Controller
                 'descuento_monto' => $descuentoMonto,
                 'total_final' => $totalFinal,
                 'motivo_descuento' => $validated['motivo_descuento'] ?? null,
+                'forma_pago' => $validated['forma_pago'],
             ]);
 
             // Detalles
@@ -131,7 +150,7 @@ class VentaController extends Controller
             MovimientoCaja::create([
                 'tipo' => 'ingreso',
                 'monto' => $totalFinal,
-                'descripcion' => "Venta ID {$venta->id} - Comprobante {$venta->comprobante_externo}" . 
+                'descripcion' => "Venta ID {$venta->id} - Comprobante {$venta->comprobante_externo} - {$venta->forma_pago}" . 
                                ($descuentoTotal > 0 ? " (Descuento: ${$descuentoTotal})" : ""),
                 'fecha' => Carbon::now(),
             ]);

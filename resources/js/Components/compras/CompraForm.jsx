@@ -16,6 +16,7 @@ export default function CompraForm({ onCompraRealizada, onClose }) {
     talle: "",
     precio_venta: "",
   });
+  const [formaPago, setFormaPago] = useState("efectivo");
   const buscadorRef = useRef(null);
 
   useEffect(() => {
@@ -150,12 +151,14 @@ export default function CompraForm({ onCompraRealizada, onClose }) {
           cantidad: p.cantidad,
           precio_compra: p.precio_compra,
         })),
+        forma_pago: formaPago,
       };
 
       const response = await axios.post("/compras", compraPayload);
       alert("¡Compra registrada correctamente!");
       setDetalleCompra([]);
       setComprobanteExterno("");
+      setFormaPago("efectivo");
       onCompraRealizada();
       onClose();
       setCompraCreada(response.data.id);
@@ -219,12 +222,28 @@ export default function CompraForm({ onCompraRealizada, onClose }) {
             required
           />
         </div>
-        <div className="flex items-end">
-          <div className="bg-red-50 p-3 rounded-md w-full">
-            <div className="text-sm text-red-800">
-              <strong>Total de la Compra:</strong> ${total.toFixed(2)}
-            </div>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Forma de Pago *
+          </label>
+          <select
+            value={formaPago}
+            onChange={(e) => setFormaPago(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia Bancaria</option>
+            <option value="tarjeta_debito">Tarjeta de Débito</option>
+            <option value="tarjeta_credito">Tarjeta de Crédito</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Total de la Compra */}
+      <div className="bg-red-50 p-3 rounded-md">
+        <div className="text-sm text-red-800">
+          <strong>Total de la Compra:</strong> ${total.toFixed(2)}
         </div>
       </div>
 

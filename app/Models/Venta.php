@@ -16,7 +16,8 @@ class Venta extends Model
         'descuento_porcentaje',
         'descuento_monto',
         'total_final',
-        'motivo_descuento'
+        'motivo_descuento',
+        'forma_pago'
     ];
     
     public function detalles()

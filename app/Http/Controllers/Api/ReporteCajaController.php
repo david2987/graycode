@@ -12,10 +12,18 @@ class ReporteCajaController extends Controller
     {
         $desde = $request->input('desde');
         $hasta = $request->input('hasta');
+        $tipo = $request->input('tipo');
+        $montoMin = $request->input('monto_min');
+        $montoMax = $request->input('monto_max');
+        $descripcion = $request->input('descripcion');
 
         $movimientos = MovimientoCaja::query()
             ->when($desde, fn($q) => $q->whereDate('fecha', '>=', $desde))
             ->when($hasta, fn($q) => $q->whereDate('fecha', '<=', $hasta))
+            ->when($tipo && in_array($tipo, ['ingreso', 'egreso']), fn($q) => $q->where('tipo', $tipo))
+            ->when($montoMin, fn($q) => $q->where('monto', '>=', $montoMin))
+            ->when($montoMax, fn($q) => $q->where('monto', '<=', $montoMax))
+            ->when($descripcion, fn($q) => $q->where('descripcion', 'like', '%' . $descripcion . '%'))
             ->orderBy('fecha')
             ->get();
 

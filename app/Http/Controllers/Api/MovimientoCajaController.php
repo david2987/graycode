@@ -25,6 +25,18 @@ class MovimientoCajaController extends Controller
             $query->where('tipo', $request->tipo);
         }
 
+        if ($request->filled('monto_min')) {
+            $query->where('monto', '>=', $request->input('monto_min'));
+        }
+
+        if ($request->filled('monto_max')) {
+            $query->where('monto', '<=', $request->input('monto_max'));
+        }
+
+        if ($request->filled('descripcion')) {
+            $query->where('descripcion', 'like', '%' . $request->input('descripcion') . '%');
+        }
+
         return $query->orderByDesc('fecha')->get();
     }
 

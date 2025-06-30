@@ -22,6 +22,7 @@
         <th>Fecha</th>
         <th>Tipo</th>
         <th>Monto</th>
+        <th>Forma de Pago</th>
         <th>Descripción</th>
       </tr>
     </thead>
@@ -31,6 +32,23 @@
           <td>{{ \Carbon\Carbon::parse($m->fecha)->format('d/m/Y H:i') }}</td>
           <td>{{ ucfirst($m->tipo) }}</td>
           <td>${{ number_format($m->monto, 2, ',', '.') }}</td>
+          <td>
+            @php
+              $formaPago = '';
+              if (strpos($m->descripcion, 'efectivo') !== false) {
+                $formaPago = 'Efectivo';
+              } elseif (strpos($m->descripcion, 'transferencia') !== false) {
+                $formaPago = 'Transferencia';
+              } elseif (strpos($m->descripcion, 'tarjeta_debito') !== false) {
+                $formaPago = 'T. Débito';
+              } elseif (strpos($m->descripcion, 'tarjeta_credito') !== false) {
+                $formaPago = 'T. Crédito';
+              } else {
+                $formaPago = 'N/A';
+              }
+            @endphp
+            {{ $formaPago }}
+          </td>
           <td>{{ $m->descripcion }}</td>
         </tr>
       @endforeach

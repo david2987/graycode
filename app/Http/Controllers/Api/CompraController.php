@@ -35,6 +35,23 @@ class CompraController extends Controller
             });
         }
 
+        // Nuevos filtros
+        if ($request->filled('forma_pago')) {
+            $query->where('forma_pago', $request->input('forma_pago'));
+        }
+
+        if ($request->filled('monto_min')) {
+            $query->where('total', '>=', $request->input('monto_min'));
+        }
+
+        if ($request->filled('monto_max')) {
+            $query->where('total', '<=', $request->input('monto_max'));
+        }
+
+        if ($request->filled('comprobante')) {
+            $query->where('comprobante_externo', 'like', '%' . $request->input('comprobante') . '%');
+        }
+
         return response()->json($query->orderByDesc('fecha')->paginate(10));
     }
     
@@ -64,10 +81,10 @@ class CompraController extends Controller
         $validated = $request->validate([
             'comprobante_externo' => 'required|string|max:255',
             'productos' => 'required|array|min:1',
-            'productos.*.producto_id' => 'required_without:productos.*.nuevo_producto',
-            'productos.*.nuevo_producto' => 'required_without:productos.*.producto_id',
+            'productos.*.producto_id' => 'required|exists:productos,id',
             'productos.*.cantidad' => 'required|integer|min:1',
             'productos.*.precio_compra' => 'required|numeric|min:0',
+            'forma_pago' => 'required|in:efectivo,transferencia,tarjeta_debito,tarjeta_credito',
         ]);
 
         DB::beginTransaction();
@@ -83,27 +100,13 @@ class CompraController extends Controller
                 'comprobante_externo' => $validated['comprobante_externo'],
                 'fecha' => Carbon::now(),
                 'total' => $total,
+                'forma_pago' => $validated['forma_pago'],
             ]);
 
-            // Procesar detalles
+            // Detalles
             foreach ($validated['productos'] as $item) {
-                $producto = null;
+                $producto = Producto::find($item['producto_id']);
                 
-                // Si es un producto nuevo, crearlo
-                if (isset($item['nuevo_producto']) && $item['nuevo_producto']) {
-                    $producto = Producto::create([
-                        'nombre' => $item['nombre'],
-                        'precio_venta' => $item['precio_venta'] ?? $item['precio_compra'] * 1.3, // 30% de ganancia por defecto
-                        'stock' => $item['cantidad'],
-                        'talle' => $item['talle'] ?? 'Único',
-                    ]);
-                } else {
-                    // Producto existente, actualizar stock
-                    $producto = Producto::find($item['producto_id']);
-                    $producto->stock += $item['cantidad'];
-                    $producto->save();
-                }
-
                 DetalleCompra::create([
                     'compra_id' => $compra->id,
                     'producto_id' => $producto->id,
@@ -116,7 +119,7 @@ class CompraController extends Controller
             MovimientoCaja::create([
                 'tipo' => 'egreso',
                 'monto' => $total,
-                'descripcion' => "Compra ID {$compra->id} - Comprobante {$compra->comprobante_externo}",
+                'descripcion' => "Compra ID {$compra->id} - Comprobante {$compra->comprobante_externo} - {$compra->forma_pago}",
                 'fecha' => Carbon::now(),
             ]);
 

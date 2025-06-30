@@ -104,6 +104,19 @@
             <div class="venta-number">Venta #{{ $venta->id }}</div>
             <div><strong>Comprobante:</strong> {{ $venta->comprobante_externo }}</div>
             <div><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y H:i:s') }}</div>
+            <div><strong>Forma de Pago:</strong> 
+                @if($venta->forma_pago === 'efectivo')
+                    Efectivo
+                @elseif($venta->forma_pago === 'transferencia')
+                    Transferencia Bancaria
+                @elseif($venta->forma_pago === 'tarjeta_debito')
+                    Tarjeta de Débito
+                @elseif($venta->forma_pago === 'tarjeta_credito')
+                    Tarjeta de Crédito
+                @else
+                    {{ $venta->forma_pago }}
+                @endif
+            </div>
             @if($venta->motivo_descuento)
                 <div><strong>Motivo Descuento:</strong> {{ $venta->motivo_descuento }}</div>
             @endif

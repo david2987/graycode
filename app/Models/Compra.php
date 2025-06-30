@@ -8,7 +8,7 @@ class Compra extends Model
 {
     protected $table = 'compras';
 
-    protected $fillable = ['comprobante_externo','fecha','total'];
+    protected $fillable = ['comprobante_externo','fecha','total','forma_pago'];
     
     public function detalles()
     {

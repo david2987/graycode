@@ -100,6 +100,19 @@
             <div class="compra-number">Compra #{{ $compra->id }}</div>
             <div><strong>Comprobante:</strong> {{ $compra->comprobante_externo }}</div>
             <div><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($compra->fecha)->format('d/m/Y H:i:s') }}</div>
+            <div><strong>Forma de Pago:</strong> 
+                @if($compra->forma_pago === 'efectivo')
+                    Efectivo
+                @elseif($compra->forma_pago === 'transferencia')
+                    Transferencia Bancaria
+                @elseif($compra->forma_pago === 'tarjeta_debito')
+                    Tarjeta de Débito
+                @elseif($compra->forma_pago === 'tarjeta_credito')
+                    Tarjeta de Crédito
+                @else
+                    {{ $compra->forma_pago }}
+                @endif
+            </div>
         </div>
     </div>
 

@@ -16,6 +16,7 @@ export default function VentaForm({ onVentaRealizada, onClose }) {
     monto: 0,
     motivo: ""
   });
+  const [formaPago, setFormaPago] = useState("efectivo");
   const buscadorRef = useRef(null);
 
   useEffect(() => {
@@ -133,6 +134,7 @@ export default function VentaForm({ onVentaRealizada, onClose }) {
         descuento_porcentaje: parseFloat(descuentos.porcentaje) > 0 ? parseFloat(descuentos.porcentaje) : null,
         descuento_monto: parseFloat(descuentos.monto) > 0 ? parseFloat(descuentos.monto) : null,
         motivo_descuento: descuentos.motivo || null,
+        forma_pago: formaPago,
       };
 
       const response = await axios.post("/ventas", ventaPayload);
@@ -140,6 +142,7 @@ export default function VentaForm({ onVentaRealizada, onClose }) {
       setDetalleVenta([]);
       setComprobanteExterno("");
       setDescuentos({ porcentaje: 0, monto: 0, motivo: "" });
+      setFormaPago("efectivo");
       onVentaRealizada();
       onClose();
       setVentaCreada(response.data.id);
@@ -215,12 +218,28 @@ export default function VentaForm({ onVentaRealizada, onClose }) {
             required
           />
         </div>
-        <div className="flex items-end">
-          <div className="bg-blue-50 p-3 rounded-md w-full">
-            <div className="text-sm text-blue-800">
-              <strong>Total Final:</strong> ${totalFinal.toFixed(2)}
-            </div>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Forma de Pago *
+          </label>
+          <select
+            value={formaPago}
+            onChange={(e) => setFormaPago(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia Bancaria</option>
+            <option value="tarjeta_debito">Tarjeta de Débito</option>
+            <option value="tarjeta_credito">Tarjeta de Crédito</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Total Final */}
+      <div className="bg-blue-50 p-3 rounded-md">
+        <div className="text-sm text-blue-800">
+          <strong>Total Final:</strong> ${totalFinal.toFixed(2)}
         </div>
       </div>
 
