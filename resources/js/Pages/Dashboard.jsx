@@ -5,7 +5,7 @@ import ProductosPage from './ProductosPage';
 import VentasPage from './VentasPage';
 import CajaPage from './CajaPage';
 import ComprasPage from './ComprasPage';
-
+import EstadisticasPage from './EstadisticasPage';
 export default function Dashboard() {
     const [activeTab, setActiveTab] = useState('productos');
 
@@ -19,6 +19,8 @@ export default function Dashboard() {
                 return <VentasPage />;
             case 'compras':
                 return <ComprasPage />;
+            case 'estadisticas':
+                return <EstadisticasPage />;
             default:
                 return <div>Contenido por defecto</div>;
         }
@@ -72,6 +74,17 @@ export default function Dashboard() {
                         >
                             <i className="fas fa-shopping-cart"></i>
                             Compras
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('estadisticas')}
+                            className={`px-4 py-2 rounded-md ${
+                                activeTab === 'estadisticas'
+                                    ? 'bg-gray-500 text-white'
+                                    : 'bg-gray-200 text-gray-700'
+                            } flex items-center gap-2`}
+                        >
+                            <i className="fas fa-chart-line"></i>
+                            Estadisticas
                         </button>
                     </div>
                 </div>

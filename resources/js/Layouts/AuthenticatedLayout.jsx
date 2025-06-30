@@ -65,7 +65,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         active={route().current('ventas.index')}
                                     >
                                         Ventas
-                                    </NavLink>
+                                    </NavLink> 
                                 )}
                                 
                                 {canAccess('compras') && (

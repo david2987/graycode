@@ -74,6 +74,11 @@ Route::prefix('ventas')->middleware(['auth', 'permission:ventas'])->group(functi
     Route::get('{id}', [VentaController::class, 'show']);
 });
 
+Route::prefix('estadisticas')->middleware(['auth', 'permission:ventas'])->group(function () {
+    Route::get('/', fn () => Inertia::render('EstadisticasPage'))->name('estadisticas.index');
+    Route::get('/getEstadisticas', [\App\Http\Controllers\Api\EstadisticasController::class, 'getEstadisticas']);
+});
+
 Route::prefix('caja')->middleware(['auth', 'permission:caja'])->group(function () {
     Route::get('/' ,fn () => Inertia::render('CajaPage'))->name('caja.index');
     Route::get('/getAll',[MovimientoCajaController::class, 'getAll']);
